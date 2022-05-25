@@ -2,14 +2,14 @@ const express = require('express');
 const router = express.Router();
 
 //// IMPORTING CONTROLLERS  /////
-const { createUser }= require("../controller/userController");
-// const bookController = require("../controllers/bookController")
-// const reviewController = require("../controllers/reviewController")
-// const middleware = require ("../middleware/auth")
+const { createUser, userLogin, getDetails }= require("../controller/userController");
+
 
 //////
 
 router.post('/register', createUser)
-//router.post('/', userLogin)
+router.post("/login", userLogin)
+router.get('/user/:userId/profile', getDetails)
+
 
 module.exports = router;

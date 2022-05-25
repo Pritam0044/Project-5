@@ -1,6 +1,14 @@
 const userModel = require('../models/userModel')
 const bcrypt = require('bcrypt');
 const aws = require('aws-sdk')
+const mongoose = require('mongoose')
+const jwt = require('jsonwebtoken')
+
+///// validator functions /////
+const isValidRequestBody = function (requestBody) {
+    return Object.keys(requestBody).length > 0
+
+}
 
 
 ///------------------------------------------file -----------------------------------///
@@ -196,7 +204,54 @@ let createUser = async (req, res) => {
     }
 }
 
-module.exports = { createUser }
+/////////////////////// [ login ] ///////////////
+
+const userLogin = async function(req, res) {
+    try {
+        const requestBody = req.body;
+        if (!isValidRequestBody(requestBody)) {
+            res.status(400).send({ status: false, message: 'Invalid request parameters' })
+            return
+        }
+        if (requestBody.email && requestBody.password) {
+            const check = await userModel.findOne({ email: requestBody.email, password: requestBody.password });
+            if (!check) {
+                return res.status(400).send({ status:false, msg: "Invalid login" })
+            }
+
+            let payload = { _id: check._id }
+            let token = jwt.sign(payload, 'project5',{ expiresIn: '50s'})
+            res.header('x-token', token);
+            res.status(200).send({ status: true, data: "login successfull", token: { token } })
+        } else {
+            res.status(400).send({ status: false, msg: "email & password is Required" })
+        }
+    } catch (error) {
+        res.status(500).send({ status: false, error: error.message })
+    }
+}
+
+
+// ////////////////////////// [ get details ]  //////////////
+let getDetails = async function(req,res){
+    let user_id = req.params.userId
+
+    var isValid = mongoose.Types.ObjectId.isValid(user_id)
+    if(isValid == false){
+        return res.status(400).send({status:false, message:"please provide valid userId"})
+    } 
+    let userDetails = await userModel.findById(user_id)
+    if(userDetails == null){
+        return res.status(404).send({status:false, message:"User not found!"})
+    }
+    
+    res.status(200).send({status:"true",message:"User profile details", data:userDetails})
+
+}
+
+//////////////// /////////////////////
+
+module.exports = { createUser, userLogin, getDetails }
 
 
 
